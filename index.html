@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c2233">
+<title>لوحة الأدمن — بيانات المشتركين</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+<style>
+:root{--ink:#0c2233;--paper:#eef3f6;--card:#fff;--line:#d3dde4;--mute:#5b6f7d;--flame:#0a6fb0;--ember:#f2a516;--ok:#14805f;--bad:#c23b3b;--warn:#b8860b;--r:12px}
+@media(prefers-color-scheme:dark){:root{--ink:#e7eff5;--paper:#0a1722;--card:#112636;--line:#223a4c;--mute:#8da4b4;--flame:#4fb0ee;--ember:#f5b53a;--ok:#3cc596;--bad:#ef7a7a;--warn:#e0b341}}
+*{box-sizing:border-box;margin:0}
+html{direction:rtl;font-size:15px}
+body{font-family:'Segoe UI','Noto Sans Arabic',Tahoma,Arial,sans-serif;background:var(--paper);color:var(--ink);line-height:1.6;min-height:100vh}
+:focus-visible{outline:3px solid var(--ember);outline-offset:2px}
+button,input,select{font:inherit;color:inherit}
+.btn{border:0;border-radius:10px;padding:.6rem 1rem;font-weight:700;background:var(--flame);color:#fff;cursor:pointer;min-height:42px;transition:transform .1s}
+.btn:active{transform:scale(.97)}.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--flame);border:2px solid var(--flame)}
+.btn.danger{background:var(--bad)}
+.btn.sm{padding:.35rem .7rem;font-size:.85rem;min-height:34px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1rem;margin-bottom:1rem}
+.top{background:#0c2233;color:#e7eff5;padding:.9rem 1rem 1.3rem;border-bottom:5px solid var(--ember);margin-bottom:-.6rem}
+.top>div{max-width:1100px;margin:auto;display:flex;align-items:center;gap:.7rem}
+.top h1{font-size:1.2rem}.top p{font-size:.8rem;color:#9db6c8}
+.top svg{width:36px;height:36px;flex:none}
+main{max-width:1100px;margin:0 auto 2rem;padding:1rem;display:grid;gap:1rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.5rem}
+.actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem}
+.wrap{overflow:auto;max-height:480px;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:.8rem}
+th,td{border:1px solid var(--line);padding:.25rem .45rem;text-align:right;white-space:nowrap;vertical-align:middle}
+th{background:var(--paper);position:sticky;top:0;z-index:1;font-weight:700}
+td.nullcell{background:#fff3cd;color:#7a5d00}
+td.editing{background:#e0f0ff}
+td[contenteditable="true"]{outline:2px solid var(--flame)}
+.col-item{display:flex;align-items:center;gap:.4rem;background:var(--paper);padding:.35rem .5rem;border-radius:7px;border:1px solid var(--line);margin-bottom:.3rem;font-size:.85rem}
+.col-item input[type=text]{flex:1;border:1px solid var(--line);background:var(--card);padding:.2rem .4rem;border-radius:5px;min-width:80px}
+.col-item input[type=number]{width:55px;border:1px solid var(--line);background:var(--card);padding:.2rem;border-radius:5px}
+.col-item input[type=checkbox]{width:18px;height:18px;cursor:pointer}
+.col-item button{min-height:28px;padding:.15rem .5rem;font-size:.75rem}
+.tabs{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.6rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+.tabs button{background:transparent;border:0;padding:.4rem .8rem;border-radius:7px;cursor:pointer;font-weight:600;color:var(--mute)}
+.tabs button.active{background:var(--flame);color:#fff}
+.badge{display:inline-block;background:var(--ember);color:#0c2233;border-radius:20px;padding:.1rem .5rem;font-size:.7rem;font-weight:700;margin-inline-start:.3rem}
+.badge.bad{background:var(--bad);color:#fff}
+.badge.ok{background:var(--ok);color:#fff}
+.log{list-style:none;padding:0;display:grid;gap:.3rem;margin-top:.5rem;font-size:.85rem}
+.log li{padding:.35rem .6rem;border-radius:7px;background:var(--paper);border-inline-start:4px solid var(--line)}
+.log li.ok{border-color:var(--ok)}.log li.bad{border-color:var(--bad)}.log li.warn{border-color:var(--warn)}
+.hint{font-size:.8rem;color:var(--mute);margin:.3rem 0}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:.5rem}
+input[type=text],input[type=number],input[type=password],select{padding:.4rem .6rem;border:1px solid var(--line);border-radius:7px;background:var(--card);min-height:36px}
+.flex1{flex:1;min-width:140px}
+details summary{cursor:pointer;font-weight:700;padding:.4rem 0}
+.pill{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:.15rem .6rem;font-size:.78rem}
+.sticky-actions{position:sticky;bottom:0;background:var(--card);padding:.6rem;border-top:1px solid var(--line);display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin-top:.5rem;z-index:5}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:1rem}
+.modal-backdrop.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.2rem;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal h3{margin-bottom:.6rem;font-size:1.1rem}
+.modal p.hint{margin-bottom:.8rem}
+.pw-wrap{position:relative;display:flex;align-items:center}
+.pw-wrap input{flex:1;padding-inline-end:2.8rem;width:100%}
+.pw-eye{position:absolute;inset-inline-end:.4rem;background:transparent;border:0;cursor:pointer;font-size:1.1rem;padding:.2rem .4rem;border-radius:6px}
+.pw-eye:hover{background:var(--paper)}
+.modal .actions{justify-content:flex-end;margin-top:1rem}
+.warn-box{background:#fff3cd;color:#7a5d00;border:1px solid #e0c200;padding:.6rem .8rem;border-radius:8px;font-size:.82rem;margin:.6rem 0}
+@media(prefers-color-scheme:dark){.warn-box{background:#3a2f00;color:#f5d97a;border-color:#5a4800}}
+.enc-badge{display:inline-block;background:var(--ok);color:#fff;border-radius:20px;padding:.1rem .5rem;font-size:.7rem;font-weight:700;margin-inline-start:.3rem}
+</style>
+</head>
+<body>
+<header class="top"><div>
+<svg viewBox="0 0 48 48"><path d="M24 3c3 9 14 13 14 26a14 14 0 0 1-28 0c0-6 3-9 6-12 0 5 3 7 5 7-2-8 0-15 3-21z" fill="#f2a516"/><path d="M24 24c2 4 7 6 7 12a7 7 0 0 1-14 0c0-4 4-6 7-12z" fill="#0a6fb0"/></svg>
+<span><h1>لوحة الأدمن</h1><p>بيانات المشتركين — ثابت + متغير + سجل تاريخي</p></span>
+</div></header>
+
+<main>
+
+<section class="card">
+  <h2>1. رفع الملفات</h2>
+  <p class="hint">PDF أو Excel. اضغط "عرض البيانات" بعد الرفع.</p>
+  <div class="actions">
+    <button class="btn" onclick="pdfIn.click()">ملفات PDF</button>
+    <button class="btn" onclick="xlsIn.click()">ملفات Excel</button>
+    <button class="btn ghost" id="showPreviewBtn" disabled>عرض البيانات</button>
+  </div>
+  <input type="file" id="pdfIn" accept=".pdf" multiple hidden>
+  <input type="file" id="xlsIn" accept=".xlsx,.xls,.csv" multiple hidden>
+  <ul class="log" id="logList"></ul>
+</section>
+
+<section class="card" id="previewSection" style="display:none">
+  <h2>2. إعداد الأعمدة والرقم الفريد</h2>
+  <div class="row">
+    <label><input type="checkbox" id="uidAllNone"> تحديد الكل / إلغاء</label>
+    <span class="pill" id="uidPreviewPill">—</span>
+  </div>
+  <details open>
+    <summary>الأعمدة: ترتيب، اختيار، اسم جديد، واختيار مكوّنات الرقم الفريد</summary>
+    <div id="columnControls" style="margin-top:.5rem"></div>
+  </details>
+  <div class="hint">الرقم الفريد = دمج الأعمدة المختارة (بدون فواصل). الترتيب مهم. يظهر في التصدير.</div>
+  <div class="wrap">
+    <table id="previewTable"><thead id="previewHead"></thead><tbody id="previewBody"></tbody></table>
+  </div>
+  <div class="sticky-actions">
+    <button class="btn" id="saveMasterBtn">حفظ في الثابت (Master)</button>
+    <button class="btn ghost" id="exportExcelBtn">تصدير Excel</button>
+    <button class="btn ghost" id="exportCsvBtn">تصدير CSV</button>
+    <button class="btn ghost" id="exportJsonGzBtn">تصدير JSON.gz</button>
+    <button class="btn danger" id="discardBtn">إلغاء</button>
+  </div>
+</section>
+
+<section class="card">
+  <h2>3. البيانات الثابتة (Master) <span class="enc-badge" id="masterEncBadge" style="display:none">🔒 محمي</span></h2>
+  <div class="row">
+    <span class="pill" id="masterCount">—</span>
+    <input type="text" id="searchMaster" placeholder="بحث..." class="flex1">
+  </div>
+  <div class="actions">
+    <button class="btn ghost sm" id="exportMasterEnc">🔒 تصدير Master مشفّر</button>
+    <button class="btn ghost sm" id="exportMasterPlain">تصدير غير مشفّر (تحذير)</button>
+    <button class="btn ghost sm" id="pullMasterEnc">🔒 تحميل Master من GitHub</button>
+    <button class="btn danger sm" id="clearMasterBtn">مسح Master</button>
+  </div>
+  <div class="wrap" style="max-height:300px">
+    <table id="masterTable"><thead><tr><th>#</th><th>UniqueID</th><th>الاسم</th><th>محافظة</th><th>بلوك</th><th>عمارة</th><th>شقة</th><th>فرعي</th></tr></thead><tbody></tbody></table>
+  </div>
+</section>
+
+<section class="card">
+  <h2>4. استيراد ملف شهري (Delta)</h2>
+  <p class="hint">ارفع ملف المتغيرات (Excel/CSV/JSON.gz). سيتم مطابقة الـ UniqueID مع Master.</p>
+  <div class="row">
+    <input type="file" id="monthlyIn" accept=".xlsx,.xls,.csv,.json,.gz">
+    <input type="text" id="monthLabel" placeholder="الشهر (YYYY-MM)" value="">
+    <button class="btn" id="importMonthlyBtn">استيراد</button>
+  </div>
+  <ul class="log" id="monthlyLog"></ul>
+</section>
+
+<section class="card" id="reviewSection" style="display:none">
+  <h2>5. مراجعة الشهر <span class="badge" id="reviewMonthBadge"></span></h2>
+  <div class="row">
+    <span class="pill" id="reviewStats">—</span>
+    <button class="btn sm" id="applyMatchedBtn">تطبيق المطابقات (تحديث Master + History)</button>
+    <button class="btn ghost sm" id="addNewBtn">إضافة الجدد إلى Master</button>
+    <button class="btn danger sm" id="cancelReviewBtn">إلغاء</button>
+  </div>
+  <div class="wrap" style="max-height:340px">
+    <table id="reviewTable"><thead id="reviewHead"></thead><tbody id="reviewBody"></tbody></table>
+  </div>
+</section>
+
+<section class="card">
+  <h2>6. السجل التاريخي</h2>
+  <div class="row">
+    <input type="text" id="searchHistory" placeholder="بحث بـ UniqueID أو اسم..." class="flex1">
+  </div>
+  <div class="actions">
+    <button class="btn ghost sm" id="exportHistoryEnc">🔒 تصدير History مشفّر</button>
+    <button class="btn ghost sm" id="exportHistoryGz">تصدير History عادي</button>
+  </div>
+  <div class="wrap" style="max-height:340px">
+    <table id="historyTable"><thead><tr><th>الشهر</th><th>UniqueID</th><th>القيمة</th><th>العدد</th><th>قراءة العداد</th><th>تحديث</th></tr></thead><tbody></tbody></table>
+  </div>
+</section>
+
+<section class="card">
+  <h2>7. بحث واستبدال جماعي</h2>
+  <div class="row">
+    <select id="replaceTarget">
+      <option value="master">Master</option>
+      <option value="monthly">History</option>
+    </select>
+    <input type="text" id="replaceFrom" placeholder="ابحث عن..." class="flex1">
+    <input type="text" id="replaceTo" placeholder="استبدل بـ..." class="flex1">
+    <label><input type="checkbox" id="useRegex"> Regex</label>
+    <button class="btn ghost sm" id="previewReplaceBtn">معاينة</button>
+    <button class="btn sm" id="doReplaceBtn">استبدال</button>
+  </div>
+  <div id="replacePreview" class="hint"></div>
+</section>
+
+<section class="card">
+  <h2>8. GitHub (قراءة فقط)</h2>
+  <div class="row">
+    <input type="text" id="ghOwner" placeholder="owner" class="flex1">
+    <input type="text" id="ghRepo" placeholder="repo" class="flex1">
+    <input type="text" id="ghBranch" placeholder="main" class="flex1" value="main">
+    <button class="btn sm" id="saveGhBtn">حفظ الإعداد</button>
+  </div>
+  <div class="actions">
+    <button class="btn ghost sm" id="pullSettingsGh">تحميل settings.json</button>
+    <button class="btn ghost sm" id="clearRememberedBtn">مسح كلمة السر المحفوظة</button>
+  </div>
+  <p class="hint">الملفات تُقرأ من raw.githubusercontent.com/data/. للرفع: ضع الملفات التي تصدّرها يدويًا في المستودع.</p>
+</section>
+
+<section class="card">
+  <h2>9. الإعدادات والقوالب</h2>
+  <div id="templatesList"></div>
+  <div class="row">
+    <input type="text" id="newTemplateName" placeholder="اسم قالب جديد" class="flex1">
+    <button class="btn sm" id="saveTemplateBtn">حفظ قالب من الأعمدة الحالية</button>
+  </div>
+  <details>
+    <summary>استيراد/تصدير كل البيانات (نسخة احتياطية)</summary>
+    <div class="row" style="margin-top:.5rem">
+      <button class="btn ghost sm" id="backupAllBtn">تصدير نسخة احتياطية مشفّرة</button>
+      <input type="file" id="restoreIn" accept=".json,.gz">
+      <button class="btn sm" id="restoreBtn">استيراد نسخة</button>
+    </div>
+  </details>
+</section>
+
+</main>
+
+<div class="modal-backdrop" id="pwModal">
+  <div class="modal">
+    <h3 id="pwTitle">كلمة السر</h3>
+    <p class="hint" id="pwHint"></p>
+    <div class="row" style="flex-direction:column;align-items:stretch;gap:.5rem">
+      <div class="pw-wrap">
+        <input type="password" id="pwInput" placeholder="كلمة السر" autocomplete="new-password">
+        <button type="button" class="pw-eye" id="pwEye" title="إظهار/إخفاء">👁</button>
+      </div>
+      <div class="pw-wrap" id="pwConfirmWrap" style="display:none">
+        <input type="password" id="pwConfirm" placeholder="تأكيد كلمة السر" autocomplete="new-password">
+        <button type="button" class="pw-eye" id="pwEye2" title="إظهار/إخفاء">👁</button>
+      </div>
+      <label id="pwRememberWrap" style="display:none;font-size:.85rem">
+        <input type="checkbox" id="pwRemember"> تذكرني على هذا الجهاز (مشفّرة)
+      </label>
+      <div class="warn-box" id="pwWarn" style="display:none">
+        ⚠️ لا يمكن استرجاع كلمة السر إن نسيت. احفظها في مكان آمن.
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" id="pwCancel">إلغاء</button>
+      <button class="btn" id="pwOk">تأكيد</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   Utils
+   ========================================================= */
+const IN_AR = '٠١٢٣٤٥٦٧٨٩';
+const toLatin = s => String(s ?? '').replace(/[٠-٩]/g, d => IN_AR.indexOf(d));
+const clean = s => String(s ?? '').normalize('NFKC').replace(/[\u202A-\u202E\u200E\u200F\uFEFF\u00A0\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+const normalizeAr = s => clean(s).replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').toLowerCase();
+const $ = id => document.getElementById(id);
+const log = (elId, msg, type='ok') => {
+  const li = document.createElement('li');
+  li.className = type;
+  li.textContent = msg;
+  $(elId).appendChild(li);
+};
+const clearLog = elId => { $(elId).innerHTML = ''; };
+
+/* =========================================================
+   IndexedDB — master, monthly, settings
+   ========================================================= */
+let _db = null;
+function openDB(){
+  return new Promise((res, rej) => {
+    if (_db) return res(_db);
+    const req = indexedDB.open('adminData', 2);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('master')) db.createObjectStore('master', { keyPath: 'uniqueId' });
+      if (!db.objectStoreNames.contains('monthly')) db.createObjectStore('monthly', { keyPath: 'key' });
+      if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'k' });
+    };
+    req.onsuccess = e => { _db = e.target.result; res(_db); };
+    req.onerror = () => rej(req.error);
+  });
+}
+async function dbAll(store){
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const r = db.transaction(store, 'readonly').objectStore(store).getAll();
+    r.onsuccess = () => res(r.result || []);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function dbPut(store, value){
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const r = db.transaction(store, 'readwrite').objectStore(store).put(value);
+    r.onsuccess = () => res();
+    r.onerror = () => rej(r.error);
+  });
+}
+async function dbPutMany(store, arr){
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const s = tx.objectStore(store);
+    arr.forEach(v => s.put(v));
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+async function dbClear(store){
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const r = db.transaction(store, 'readwrite').objectStore(store).clear();
+    r.onsuccess = () => res();
+    r.onerror = () => rej(r.error);
+  });
+}
+async function dbGet(store, key){
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const r = db.transaction(store, 'readonly').objectStore(store).get(key);
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function dbDel(store, key){
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const r = db.transaction(store, 'readwrite').objectStore(store).delete(key);
+    r.onsuccess = () => res();
+    r.onerror = () => rej(r.error);
+  });
+}
+
+/* =========================================================
+   تشفير AES-GCM + PBKDF2
+   ========================================================= */
+const ENC_ITER = 100000;
+const ENC_SALT_LEN = 16;
+const ENC_IV_LEN = 12;
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder();
+
+async function deriveKey(password, salt){
+  const baseKey = await crypto.subtle.importKey(
+    'raw', textEncoder.encode(password), 'PBKDF2', false, ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt, iterations: ENC_ITER, hash:'SHA-256' },
+    baseKey,
+    { name:'AES-GCM', length:256 },
+    false,
+    ['encrypt','decrypt']
+  );
+}
+async function encryptBytes(plainBytes, password){
+  const salt = crypto.getRandomValues(new Uint8Array(ENC_SALT_LEN));
+  const iv = crypto.getRandomValues(new Uint8Array(ENC_IV_LEN));
+  const key = await deriveKey(password, salt);
+  const cipher = new Uint8Array(await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, plainBytes));
+  const out = new Uint8Array(salt.length + iv.length + cipher.length);
+  out.set(salt, 0);
+  out.set(iv, salt.length);
+  out.set(cipher, salt.length + iv.length);
+  return out;
+}
+async function decryptBytes(encBytes, password){
+  const salt = encBytes.slice(0, ENC_SALT_LEN);
+  const iv = encBytes.slice(ENC_SALT_LEN, ENC_SALT_LEN + ENC_IV_LEN);
+  const cipher = encBytes.slice(ENC_SALT_LEN + ENC_IV_LEN);
+  const key = await deriveKey(password, salt);
+  const plain = await crypto.subtle.decrypt({ name:'AES-GCM', iv }, key, cipher);
+  return new Uint8Array(plain);
+}
+
+function askPassword({ title, hint, confirm=false, remember=false }){
+  return new Promise((resolve, reject) => {
+    $('pwTitle').textContent = title || 'كلمة السر';
+    $('pwHint').textContent = hint || '';
+    $('pwInput').value = '';
+    $('pwConfirm').value = '';
+    $('pwConfirmWrap').style.display = confirm ? '' : 'none';
+    $('pwRememberWrap').style.display = remember ? '' : 'none';
+    $('pwRemember').checked = false;
+    $('pwWarn').style.display = confirm ? '' : 'none';
+    $('pwInput').type = 'password';
+    $('pwConfirm').type = 'password';
+    $('pwEye').textContent = '👁';
+    $('pwEye2').textContent = '👁';
+    $('pwModal').classList.add('show');
+    setTimeout(() => $('pwInput').focus(), 50);
+
+    const cleanup = () => {
+      $('pwModal').classList.remove('show');
+      $('pwOk').onclick = null;
+      $('pwCancel').onclick = null;
+      $('pwInput').onkeydown = null;
+      $('pwConfirm').onkeydown = null;
+      $('pwEye').onclick = null;
+      $('pwEye2').onclick = null;
+    };
+    const submit = () => {
+      const v = $('pwInput').value;
+      if (!v){ $('pwInput').focus(); return; }
+      if (confirm && v !== $('pwConfirm').value){
+        alert('كلمتا السر غير متطابقتين');
+        return;
+      }
+      const rememberVal = remember && $('pwRemember').checked;
+      cleanup();
+      resolve({ password: v, remember: rememberVal });
+    };
+    $('pwOk').onclick = submit;
+    $('pwCancel').onclick = () => { cleanup(); reject(new Error('cancelled')); };
+    $('pwInput').onkeydown = e => { if (e.key === 'Enter'){ if (confirm) $('pwConfirm').focus(); else submit(); } };
+    $('pwConfirm').onkeydown = e => { if (e.key === 'Enter') submit(); };
+    const toggle = (inp, btn) => {
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+    };
+    $('pwEye').onclick = () => toggle($('pwInput'), $('pwEye'));
+    $('pwEye2').onclick = () => toggle($('pwConfirm'), $('pwEye2'));
+  });
+}
+
+const LOCAL_KEY = 'adminData-local-v1';
+async function saveRememberedPassword(pw){
+  const enc = await encryptBytes(textEncoder.encode(pw), LOCAL_KEY);
+  await dbPut('settings', { k:'rememberedPw', v: Array.from(enc) });
+}
+async function loadRememberedPassword(){
+  try {
+    const s = await dbGet('settings','rememberedPw');
+    if (!s || !s.v) return null;
+    const dec = await decryptBytes(new Uint8Array(s.v), LOCAL_KEY);
+    return textDecoder.decode(dec);
+  } catch(e){ return null; }
+}
+async function clearRememberedPassword(){
+  await dbDel('settings','rememberedPw');
+}
+
+function downloadBlob(blob, name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+async function getPasswordForEncrypt(){
+  const saved = await loadRememberedPassword();
+  if (saved) return { password: saved, remember: true, fromSaved: true };
+  return await askPassword({
+    title: 'تشفير البيانات',
+    hint: 'كلمة السر لحماية الملف. لا يمكن استرجاعها إن نسيت.',
+    confirm: true,
+    remember: true
+  });
+}
+
+/* =========================================================
+   State
+   ========================================================= */
+const EXPECTED_COLS = ['القيمة','العدد','شهر الإصدار','من','محافظة','منطقة','يومية','قطاع','بلوك','عمارة','شقة','فرعي','اسم العميل','المسلسل','م','قراءة العداد','الشهر'];
+const DEFAULT_UID_PARTS = ['محافظة','قطاع','بلوك','عمارة','شقة','فرعي'];
+
+let rawData = [];
+let detectedColumns = [];
+let columnConfig = {};
+let uidParts = [...DEFAULT_UID_PARTS];
+let templates = [];
+let monthlyReview = null;
+
+/* =========================================================
+   PDF / Excel readers
+   ========================================================= */
+const loadPdfWorker = () => {
+  if (window.pdfjsLib && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+};
+async function readPdf(file){
+  loadPdfWorker();
+  const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+  let allRows = [];
+  for (let p = 1; p <= pdf.numPages; p++){
+    const page = await pdf.getPage(p);
+    const tc = await page.getTextContent();
+    const items = tc.items.filter(i => i.str.trim()).map(i => ({
+      str: clean(i.str), x: i.transform[4], y: i.transform[5],
+      w: i.width, h: Math.abs(i.height) || 10
+    }));
+    const rows = [];
+    for (const item of items){
+      let row = rows.find(r => Math.abs(r.y - item.y) <= item.h * 0.8);
+      if (!row){ row = { y: item.y, items: [] }; rows.push(row); }
+      row.items.push(item);
+    }
+    for (const row of rows){
+      row.items.sort((a,b)=>a.x-b.x);
+      const cells = [];
+      for (const item of row.items){
+        let cell = cells.find(c => Math.abs(c.x2 - item.x) < item.h * 1.5);
+        if (!cell){ cell = { text:'', x1:item.x, x2:item.x+item.w }; cells.push(cell); }
+        cell.text += ' ' + item.str;
+        cell.x2 = Math.max(cell.x2, item.x + item.w);
+      }
+      const texts = cells.map(c => toLatin(clean(c.text))).filter(Boolean);
+      if (texts.length < 2) continue;
+      if (texts.some(t => t.includes('اسم العميل')) || texts.some(t => t.includes('بلوك'))) continue;
+      allRows.push(texts);
+    }
+  }
+  return { rows: allRows };
+}
+async function readExcel(file){
+  const wb = XLSX.read(await file.arrayBuffer(), { type:'array' });
+  let allHeaders = [];
+  let allRows = [];
+  for (const sn of wb.SheetNames){
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header:1, defval:'' });
+    const headerIndex = rows.findIndex(r => r.some(c => String(c).includes('اسم') || String(c).includes('بلوك') || String(c).includes('شقة') || String(c).includes('cvs')));
+    if (headerIndex === -1) continue;
+    const headers = rows[headerIndex].map(c => toLatin(clean(c)));
+    allHeaders = headers;
+    const dataRows = rows.slice(headerIndex+1).map(r => {
+      const obj = {};
+      headers.forEach((h,i)=> obj[h] = toLatin(clean(r[i] || '')));
+      return obj;
+    });
+    allRows = allRows.concat(dataRows);
+  }
+  return { headers: allHeaders, rows: allRows };
+}
+function cleanAndSplit(rows){
+  const result = [];
+  for (const row of rows){
+    if (!Array.isArray(row)) continue;
+    const rowStr = row.join(' ');
+    if (rowStr.includes('Petroleum Trading') || rowStr.includes('شركة الخدمات') || rowStr.includes('صفحة') || rowStr.includes('نظم وتكنولوجيا') || rowStr.includes('الإجمالي') || rowStr.includes('الاجمالي') || rowStr.includes('الإجــمــــ')) continue;
+    let cvsParts = null, cvsIndex = -1;
+    for (let i = 0; i < row.length; i++){
+      const val = String(row[i] || '').trim();
+      if (!val) continue;
+      const parts = val.split(/\s+/);
+      if (parts.length >= 10 && parts.slice(0,10).every(p=>/^\d+$/.test(p))){
+        cvsParts = parts; cvsIndex = i; break;
+      }
+    }
+    let value='', count='', name='', serial='';
+    if (row.length >= 4){
+      value = String(row[0]||'').trim();
+      count = String(row[1]||'').trim();
+      const lastCell = String(row[row.length-1]||'').trim();
+      const lastIsNumber = /^\d+$/.test(lastCell);
+      const startNameIdx = cvsIndex >= 0 ? cvsIndex+1 : 3;
+      const nameParts = [];
+      for (let i = startNameIdx; i < row.length; i++){
+        if (lastIsNumber && i === row.length-1){ serial = lastCell; continue; }
+        const v = String(row[i]||'').trim();
+        if (v && !/^\d+$/.test(v)) nameParts.push(v);
+      }
+      name = nameParts.join(' ').trim();
+      if (!name && row[3]) name = String(row[3]||'').trim();
+      if (!serial){
+        for (let i = cvsIndex+1; i < row.length; i++){
+          const v = String(row[i]||'').trim();
+          if (/^\d+$/.test(v) && v.length <= 5){ serial = v; break; }
+        }
+      }
+    } else if (row.length === 3){ value = String(row[0]||'').trim(); count = String(row[1]||'').trim(); }
+    else if (row.length === 2){ value = String(row[0]||'').trim(); }
+    if (!cvsParts && !name && !value) continue;
+    const parts = cvsParts || [];
+    const newRow = {
+      'القيمة':value,'العدد':count,
+      'شهر الإصدار':parts[0]||'','من':parts[1]||'',
+      'محافظة':parts[2]||'','منطقة':parts[3]||'',
+      'يومية':parts[4]||'','قطاع':parts[5]||'',
+      'بلوك':parts[6]||'','عمارة':parts[7]||'',
+      'شقة':parts[8]||'','فرعي':parts[9]||'',
+      'اسم العميل':name,'المسلسل':serial,'م':serial,
+      'قراءة العداد':'','الشهر':''
+    };
+    const fr = newRow['فرعي'];
+    if (fr === null || fr === undefined || fr === '' || String(fr).trim() === '' || String(fr).toLowerCase() === 'null') continue;
+    result.push(newRow);
+  }
+  return result;
+}
+
+/* =========================================================
+   Unique ID
+   ========================================================= */
+function buildUniqueId(row){
+  return uidParts.map(p => clean(row[p] ?? '')).join('');
+}
+function ensureUniqueId(row){
+  if (!row['uniqueId']) row['uniqueId'] = buildUniqueId(row);
+  return row['uniqueId'];
+}
+
+/* =========================================================
+   Handle files
+   ========================================================= */
+async function handleFiles(files, isPdf){
+  clearLog('logList');
+  rawData = []; detectedColumns = []; columnConfig = {};
+  for (const file of files){
+    try {
+      log('logList', `قراءة ${file.name}...`, 'ok');
+      const res = isPdf ? await readPdf(file) : await readExcel(file);
+      if (!res.rows.length){ log('logList', `لا بيانات في ${file.name}`, 'bad'); continue; }
+      const cleaned = isPdf ? cleanAndSplit(res.rows) : res.rows;
+      if (!cleaned.length){ log('logList', `لا صفوف صالحة في ${file.name}`, 'bad'); continue; }
+      cleaned.forEach(r => {
+        Object.keys(r).forEach(k => { if (!detectedColumns.includes(k)) detectedColumns.push(k); });
+        if (!detectedColumns.includes('uniqueId')) detectedColumns.push('uniqueId');
+        rawData.push(r);
+      });
+      log('logList', `✓ ${cleaned.length} صف من ${file.name}`, 'ok');
+    } catch(e){
+      log('logList', `خطأ ${file.name}: ${e.message}`, 'bad');
+      console.error(e);
+    }
+  }
+  EXPECTED_COLS.forEach(c => { if (!detectedColumns.includes(c)) detectedColumns.push(c); });
+  if (rawData.length){
+    detectedColumns.forEach((col, i) => {
+      columnConfig[col] = {
+        newName: col,
+        selected: EXPECTED_COLS.includes(col) || col === 'uniqueId',
+        order: i,
+        isUidPart: uidParts.includes(col)
+      };
+    });
+    $('showPreviewBtn').disabled = false;
+    log('logList', `جاهز. ${rawData.length} صف.`, 'ok');
+  } else {
+    $('showPreviewBtn').disabled = true;
+    log('logList', 'لا بيانات.', 'bad');
+  }
+}
+
+/* =========================================================
+   Preview
+   ========================================================= */
+function renderPreview(){
+  $('previewSection').style.display = 'block';
+  renderColumnControls();
+  renderTable();
+  $('previewSection').scrollIntoView({ behavior:'smooth' });
+}
+function renderColumnControls(){
+  const box = $('columnControls');
+  box.innerHTML = '';
+  const cols = [...detectedColumns].sort((a,b)=> columnConfig[a].order - columnConfig[b].order);
+  cols.forEach((col, idx) => {
+    const c = columnConfig[col];
+    const div = document.createElement('div');
+    div.className = 'col-item';
+    div.innerHTML = `
+      <input type="checkbox" data-sel="${col}" ${c.selected?'checked':''} title="إظهار في الجدول">
+      <input type="checkbox" data-uid="${col}" ${c.isUidPart?'checked':''} title="ضمن الرقم الفريد">
+      <input type="text" data-name="${col}" value="${c.newName}" title="الاسم الجديد">
+      <span class="hint" style="font-size:.72rem;min-width:70px">(${col})</span>
+      <button class="btn ghost sm" data-up="${col}" title="أعلى">↑</button>
+      <button class="btn ghost sm" data-down="${col}" title="أسفل">↓</button>
+    `;
+    box.appendChild(div);
+    div.querySelector('[data-sel]').onchange = e => { c.selected = e.target.checked; renderTable(); };
+    div.querySelector('[data-uid]').onchange = e => {
+      c.isUidPart = e.target.checked;
+      uidParts = cols.filter(x => columnConfig[x].isUidPart);
+      rawData.forEach(r => delete r.uniqueId);
+      rawData.forEach(r => ensureUniqueId(r));
+      updateUidPill();
+      renderTable();
+    };
+    div.querySelector('[data-name]').oninput = e => { c.newName = e.target.value; renderTable(); };
+    div.querySelector('[data-up]').onclick = () => {
+      const ordered = [...detectedColumns].sort((a,b)=> columnConfig[a].order - columnConfig[b].order);
+      if (idx === 0) return;
+      const prev = ordered[idx-1];
+      const tmp = columnConfig[col].order;
+      columnConfig[col].order = columnConfig[prev].order;
+      columnConfig[prev].order = tmp;
+      renderColumnControls(); renderTable();
+    };
+    div.querySelector('[data-down]').onclick = () => {
+      const ordered = [...detectedColumns].sort((a,b)=> columnConfig[a].order - columnConfig[b].order);
+      if (idx === ordered.length-1) return;
+      const nxt = ordered[idx+1];
+      const tmp = columnConfig[col].order;
+      columnConfig[col].order = columnConfig[nxt].order;
+      columnConfig[nxt].order = tmp;
+      renderColumnControls(); renderTable();
+    };
+  });
+  updateUidPill();
+}
+function updateUidPill(){
+  $('uidPreviewPill').textContent = 'الرقم الفريد = ' + (uidParts.length ? uidParts.join(' + ') : '—');
+}
+function selectedOrderedCols(){
+  return [...detectedColumns].sort((a,b)=> columnConfig[a].order - columnConfig[b].order).filter(c => columnConfig[c].selected);
+}
+function renderTable(){
+  const cols = selectedOrderedCols();
+  $('previewHead').innerHTML = '<tr>' + cols.map(c => `<th>${columnConfig[c].newName}</th>`).join('') + '</tr>';
+  $('previewBody').innerHTML = rawData.slice(0, 100).map(r => '<tr>' + cols.map(c => {
+    const v = c === 'uniqueId' ? ensureUniqueId(r) : (r[c] ?? '');
+    const isNull = v === 'null' || v === null || v === '';
+    return `<td class="${isNull?'nullcell':''}">${v === 'null' ? 'null' : v}</td>`;
+  }).join('') + '</tr>').join('');
+  if (rawData.length > 100){
+    $('previewBody').innerHTML += `<tr><td colspan="${cols.length}" style="text-align:center;color:var(--mute)">... و ${rawData.length-100} صف</td></tr>`;
+  }
+}
+
+/* =========================================================
+   Save Master / Export
+   ========================================================= */
+async function saveMaster(){
+  const cols = selectedOrderedCols();
+  if (!cols.length) return alert('اختر عمودًا واحدًا على الأقل');
+  const rows = rawData.map(r => {
+    const o = {};
+    cols.forEach(c => { o[columnConfig[c].newName] = c === 'uniqueId' ? ensureUniqueId(r) : (r[c] ?? ''); });
+    o['uniqueId'] = ensureUniqueId(r);
+    return o;
+  });
+  await dbPutMany('master', rows);
+  log('logList', `حفظ ${rows.length} في Master.`, 'ok');
+  renderMaster();
+}
+function exportRowsAsXlsx(rows, name){
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Data');
+  XLSX.writeFile(wb, `${name}_${Date.now()}.xlsx`);
+}
+function exportRowsAsCsv(rows, name){
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const csv = XLSX.utils.sheet_to_csv(ws);
+  const blob = new Blob(['\ufeff'+csv], { type:'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${name}_${Date.now()}.csv`;
+  a.click();
+}
+function exportJsonGz(obj, name){
+  const json = JSON.stringify(obj);
+  const gz = pako.gzip(json);
+  downloadBlob(new Blob([gz], { type:'application/gzip' }), name);
+}
+function currentSelectedRows(){
+  const cols = selectedOrderedCols();
+  return rawData.map(r => {
+    const o = {};
+    cols.forEach(c => { o[columnConfig[c].newName] = c === 'uniqueId' ? ensureUniqueId(r) : (r[c] ?? ''); });
+    return o;
+  });
+}
+
+/* =========================================================
+   Master UI
+   ========================================================= */
+async function renderMaster(){
+  const all = await dbAll('master');
+  $('masterCount').textContent = `${all.length} مشترك`;
+  const q = clean($('searchMaster').value).toLowerCase();
+  const filtered = q ? all.filter(r => JSON.stringify(r).toLowerCase().includes(q)) : all;
+  $('masterTable').querySelector('tbody').innerHTML = filtered.slice(0,200).map((r,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${r.uniqueId||''}</td>
+      <td>${r['اسم العميل']||r['الاسم']||''}</td>
+      <td>${r['محافظة']||''}</td>
+      <td>${r['بلوك']||''}</td>
+      <td>${r['عمارة']||''}</td>
+      <td>${r['شقة']||''}</td>
+      <td>${r['فرعي']||''}</td>
+    </tr>`).join('');
+}
+$('searchMaster').oninput = renderMaster;
+
+/* =========================================================
+   تصدير/تحميل مشفّر
+   ========================================================= */
+async function exportMasterEncrypted(){
+  const all = await dbAll('master');
+  if (!all.length) return alert('لا بيانات في Master');
+  let pw;
+  try { pw = await getPasswordForEncrypt(); } catch(e){ return; }
+  const json = JSON.stringify({ rows: all, exportedAt: new Date().toISOString() });
+  const enc = await encryptBytes(textEncoder.encode(json), pw.password);
+  const gz = pako.gzip(enc);
+  downloadBlob(new Blob([gz], { type:'application/gzip' }), `master.enc.gz`);
+  if (pw.remember && !pw.fromSaved) await saveRememberedPassword(pw.password);
+  $('masterEncBadge').style.display = 'inline-block';
+  log('logList', `✓ تصدير ${all.length} صف مشفّر. ارفع master.enc.gz إلى data/ في GitHub.`, 'ok');
+}
+async function exportMasterPlain(){
+  if (!confirm('⚠️ تحذير: نسخة غير مشفّرة = بيانات مكشوفة. متابعة؟')) return;
+  const all = await dbAll('master');
+  exportJsonGz({ rows: all }, `master_PLAIN_${Date.now()}.json.gz`);
+}
+async function pullMasterEncrypted(){
+  const s = await dbGet('settings','github');
+  if (!s || !s.v || !s.v.owner || !s.v.repo) return alert('احفظ إعداد GitHub أولاً');
+  const { owner, repo, branch } = s.v;
+  const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/data/master.enc.gz`;
+  let buf;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status + ' — تأكد أن الملف موجود في data/master.enc.gz');
+    buf = new Uint8Array(await r.arrayBuffer());
+  } catch(e){ return alert('فشل التحميل: ' + e.message); }
+
+  let saved = await loadRememberedPassword();
+  let decrypted = null;
+  if (saved){
+    try { decrypted = await decryptBytes(pako.ungzip(buf), saved); }
+    catch(e){ saved = null; }
+  }
+  if (!decrypted){
+    let pw;
+    try { pw = await askPassword({ title:'فك تشفير Master', hint:'كلمة السر التي استخدمتها عند التصدير.' }); }
+    catch(e){ return; }
+    try {
+      decrypted = await decryptBytes(pako.ungzip(buf), pw.password);
+      await saveRememberedPassword(pw.password);
+    } catch(e){ return alert('كلمة السر خاطئة أو الملف تالف'); }
+  }
+
+  try {
+    const parsed = JSON.parse(textDecoder.decode(decrypted));
+    const rows = Array.isArray(parsed) ? parsed : (parsed.rows || []);
+    if (!rows.length) return alert('لا صفوف في الملف');
+    if (!confirm(`سيتم استبدال Master الحالي بـ ${rows.length} صف. متابعة؟`)) return;
+    await dbClear('master');
+    await dbPutMany('master', rows);
+    renderMaster();
+    $('masterEncBadge').style.display = 'inline-block';
+    log('logList', `✓ تحميل ${rows.length} صف من GitHub (مشفّر).`, 'ok');
+  } catch(e){ alert('خطأ في قراءة الملف: ' + e.message); }
+}
+async function exportHistoryEncrypted(){
+  const all = await dbAll('monthly');
+  if (!all.length) return alert('لا سجل تاريخي');
+  let pw;
+  try { pw = await getPasswordForEncrypt(); } catch(e){ return; }
+  const json = JSON.stringify({ rows: all, exportedAt: new Date().toISOString() });
+  const enc = await encryptBytes(textEncoder.encode(json), pw.password);
+  const gz = pako.gzip(enc);
+  downloadBlob(new Blob([gz], { type:'application/gzip' }), `history.enc.gz`);
+  if (pw.remember && !pw.fromSaved) await saveRememberedPassword(pw.password);
+  log('logList', `✓ تصدير ${all.length} سجل مشفّر.`, 'ok');
+}
+
+/* =========================================================
+   Monthly import
+   ========================================================= */
+async function importMonthly(){
+  const f = $('monthlyIn').files[0];
+  const month = clean($('monthLabel').value);
+  if (!f) return alert('اختر ملفًا');
+  if (!/^\d{4}-\d{2}$/.test(month)) return alert('اكتب الشهر بصيغة YYYY-MM');
+  clearLog('monthlyLog');
+  let rows = [];
+  try {
+    if (f.name.endsWith('.gz')){
+      const buf = await f.arrayBuffer();
+      const json = pako.ungzip(new Uint8Array(buf), { to:'string' });
+      const parsed = JSON.parse(json);
+      rows = Array.isArray(parsed) ? parsed : (parsed.rows || []);
+    } else if (f.name.endsWith('.json')){
+      const parsed = JSON.parse(await f.text());
+      rows = Array.isArray(parsed) ? parsed : (parsed.rows || []);
+    } else {
+      const r = await readExcel(f);
+      rows = r.rows;
+    }
+  } catch(e){ log('monthlyLog', 'خطأ قراءة: '+e.message, 'bad'); return; }
+  if (!rows.length) return log('monthlyLog', 'لا صفوف', 'bad');
+
+  const master = await dbAll('master');
+  const masterMap = new Map(master.map(m => [m.uniqueId, m]));
+  const matched = [], newRows = [], errors = [];
+  for (const r of rows){
+    let uid = r['uniqueId'] || r['UniqueID'] || r['الرقم الفريد'] || '';
+    if (!uid){ try { uid = buildUniqueId(r); } catch(e){} }
+    if (!uid){ errors.push(r); continue; }
+    const m = masterMap.get(uid);
+    if (m) matched.push({ uid, master:m, monthly:r });
+    else newRows.push({ uid, monthly:r });
+  }
+  monthlyReview = { month, matched, newRows, errors };
+  log('monthlyLog', `مطابقات: ${matched.length} — جديد: ${newRows.length} — أخطاء: ${errors.length}`, matched.length?'ok':'warn');
+  renderReview();
+}
+function renderReview(){
+  if (!monthlyReview) return;
+  $('reviewSection').style.display = 'block';
+  $('reviewMonthBadge').textContent = monthlyReview.month;
+  $('reviewStats').textContent = `مطابق ${monthlyReview.matched.length} | جديد ${monthlyReview.newRows.length} | خطأ ${monthlyReview.errors.length}`;
+  const all = [...monthlyReview.matched.map(x=>({...x,kind:'match'})), ...monthlyReview.newRows.map(x=>({...x,kind:'new'}))];
+  const cols = ['uid','kind','القيمة','العدد','شهر الإصدار','قراءة العداد','الشهر'];
+  $('reviewHead').innerHTML = '<tr>' + cols.map(c=>`<th>${c}</th>`).join('') + '</tr>';
+  $('reviewBody').innerHTML = all.map(x => '<tr>' + cols.map(c => {
+    let v = c === 'uid' ? x.uid : c === 'kind' ? (x.kind==='match'?'موجود':'جديد') : (x.monthly[c] ?? '');
+    const isNull = v === 'null';
+    return `<td class="${isNull?'nullcell':''}">${v}</td>`;
+  }).join('') + '</tr>').join('');
+  $('reviewSection').scrollIntoView({ behavior:'smooth' });
+}
+async function applyMatched(){
+  if (!monthlyReview) return;
+  const month = monthlyReview.month;
+  const historyRows = monthlyReview.matched.map(x => {
+    const o = { key: x.uid + '__' + month, uniqueId: x.uid, month };
+    ['القيمة','العدد','شهر الإصدار','قراءة العداد'].forEach(k => o[k] = x.monthly[k] ?? '');
+    o.updatedAt = new Date().toISOString();
+    return o;
+  });
+  await dbPutMany('monthly', historyRows);
+  log('monthlyLog', `تطبيق ${historyRows.length} في History.`, 'ok');
+  monthlyReview.matched = [];
+  renderReview(); renderHistory();
+}
+async function addNewToMaster(){
+  if (!monthlyReview) return;
+  const rows = monthlyReview.newRows.map(x => ({ uniqueId: x.uid, ...x.monthly }));
+  await dbPutMany('master', rows);
+  log('monthlyLog', `إضافة ${rows.length} إلى Master.`, 'ok');
+  monthlyReview.newRows = [];
+  renderReview(); renderMaster();
+}
+
+/* =========================================================
+   History
+   ========================================================= */
+async function renderHistory(){
+  const all = await dbAll('monthly');
+  const q = clean($('searchHistory').value).toLowerCase();
+  const filtered = q ? all.filter(r => JSON.stringify(r).toLowerCase().includes(q)) : all;
+  filtered.sort((a,b) => (b.month||'').localeCompare(a.month||''));
+  $('historyTable').querySelector('tbody').innerHTML = filtered.slice(0,300).map(r=>`
+    <tr>
+      <td>${r.month||''}</td>
+      <td>${r.uniqueId||''}</td>
+      <td>${r['القيمة']||''}</td>
+      <td>${r['العدد']||''}</td>
+      <td>${r['قراءة العداد']||''}</td>
+      <td>${(r.updatedAt||'').slice(0,19).replace('T',' ')}</td>
+    </tr>`).join('');
+}
+$('searchHistory').oninput = renderHistory;
+
+/* =========================================================
+   Replace
+   ========================================================= */
+let replacePreviewRows = null;
+async function previewReplace(){
+  const target = $('replaceTarget').value;
+  const from = $('replaceFrom').value;
+  const to = $('replaceTo').value;
+  const useRe = $('useRegex').checked;
+  if (!from) return alert('اكتب نص البحث');
+  const data = await dbAll(target);
+  const re = useRe ? new RegExp(from, 'gi') : null;
+  const hits = [];
+  data.forEach((row, idx) => {
+    Object.keys(row).forEach(k => {
+      const v = String(row[k] ?? '');
+      const hit = useRe ? re.test(v) : v.includes(from);
+      if (hit) hits.push({ idx, key:k, old:v });
+    });
+  });
+  replacePreviewRows = { target, data, hits, useRe, from, to };
+  $('replacePreview').textContent = `سيتم استبدال ${hits.length} خلية في ${target}.`;
+}
+async function doReplace(){
+  if (!replacePreviewRows) return alert('اعمل معاينة أولاً');
+  const { target, data, hits, useRe, from, to } = replacePreviewRows;
+  const map = new Map();
+  hits.forEach(h => {
+    if (!map.has(h.idx)) map.set(h.idx, { ...data[h.idx] });
+    const v = String(map.get(h.idx)[h.key] ?? '');
+    map.get(h.idx)[h.key] = useRe ? v.replace(new RegExp(from,'gi'), to) : v.split(from).join(to);
+  });
+  await dbPutMany(target, [...map.values()]);
+  $('replacePreview').textContent = `تم استبدال ${hits.length} خلية.`;
+  replacePreviewRows = null;
+  if (target === 'master') renderMaster();
+  if (target === 'monthly') renderHistory();
+}
+
+/* =========================================================
+   Templates
+   ========================================================= */
+async function loadTemplates(){
+  const s = await dbGet('settings', 'templates');
+  templates = s ? s.v : [];
+  renderTemplatesList();
+}
+function renderTemplatesList(){
+  const box = $('templatesList');
+  if (!templates.length){ box.innerHTML = '<p class="hint">لا قوالب محفوظة.</p>'; return; }
+  box.innerHTML = templates.map((t,i)=>`
+    <div class="col-item">
+      <b>${t.name}</b>
+      <span class="hint">${t.cols.length} عمود</span>
+      <button class="btn ghost sm" data-apply="${i}">تطبيق</button>
+      <button class="btn danger sm" data-del="${i}">حذف</button>
+    </div>`).join('');
+  box.querySelectorAll('[data-apply]').forEach(b => b.onclick = () => applyTemplate(+b.dataset.apply));
+  box.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
+    templates.splice(+b.dataset.del,1);
+    await dbPut('settings', { k:'templates', v: templates });
+    renderTemplatesList();
+  });
+}
+function applyTemplate(i){
+  const t = templates[i];
+  if (!t || !rawData.length) return alert('لا بيانات لمعاينتها');
+  t.cols.forEach(c => {
+    if (columnConfig[c.col]){
+      columnConfig[c.col].newName = c.newName;
+      columnConfig[c.col].selected = c.selected;
+      columnConfig[c.col].order = c.order;
+      columnConfig[c.col].isUidPart = c.isUidPart;
+    }
+  });
+  uidParts = t.cols.filter(c=>c.isUidPart).sort((a,b)=>a.order-b.order).map(c=>c.col);
+  rawData.forEach(r => delete r.uniqueId);
+  rawData.forEach(r => ensureUniqueId(r));
+  renderColumnControls(); renderTable();
+  alert('تم تطبيق القالب');
+}
+async function saveTemplate(){
+  const name = clean($('newTemplateName').value);
+  if (!name) return alert('اكتب اسم');
+  const cols = detectedColumns.map(c => ({
+    col: c, newName: columnConfig[c].newName, selected: columnConfig[c].selected,
+    order: columnConfig[c].order, isUidPart: columnConfig[c].isUidPart
+  }));
+  templates.push({ name, cols });
+  await dbPut('settings', { k:'templates', v: templates });
+  $('newTemplateName').value = '';
+  renderTemplatesList();
+}
+
+/* =========================================================
+   GitHub
+   ========================================================= */
+async function saveGhConfig(){
+  const cfg = {
+    owner: clean($('ghOwner').value),
+    repo: clean($('ghRepo').value),
+    branch: clean($('ghBranch').value) || 'main'
+  };
+  await dbPut('settings', { k:'github', v: cfg });
+  alert('تم الحفظ');
+}
+async function loadGhConfig(){
+  const s = await dbGet('settings','github');
+  if (s && s.v){
+    $('ghOwner').value = s.v.owner || '';
+    $('ghRepo').value = s.v.repo || '';
+    $('ghBranch').value = s.v.branch || 'main';
+  }
+}
+async function pullFileFromGh(fileName){
+  const s = await dbGet('settings','github');
+  if (!s || !s.v || !s.v.owner || !s.v.repo) return alert('احفظ إعداد GitHub أولاً');
+  const { owner, repo, branch } = s.v;
+  const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/data/${fileName}`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    const buf = await r.arrayBuffer();
+    let json;
+    if (fileName.endsWith('.gz')){
+      json = pako.ungzip(new Uint8Array(buf), { to:'string' });
+    } else {
+      json = new TextDecoder().decode(buf);
+    }
+    return JSON.parse(json);
+  } catch(e){
+    alert('فشل التحميل: '+e.message);
+    return null;
+  }
+}
+async function pullSettingsGh(){
+  const parsed = await pullFileFromGh('settings.json');
+  if (!parsed) return;
+  if (parsed.templates){
+    templates = parsed.templates;
+    await dbPut('settings', { k:'templates', v: templates });
+    renderTemplatesList();
+  }
+  alert('تم تحديث القوالب');
+}
+
+/* =========================================================
+   Backup
+   ========================================================= */
+async function backupAll(){
+  const master = await dbAll('master');
+  const monthly = await dbAll('monthly');
+  const templatesS = await dbGet('settings','templates');
+  let pw;
+  try { pw = await getPasswordForEncrypt(); } catch(e){ return; }
+  const json = JSON.stringify({
+    master, monthly,
+    templates: templatesS?.v || [],
+    exportedAt: new Date().toISOString()
+  });
+  const enc = await encryptBytes(textEncoder.encode(json), pw.password);
+  const gz = pako.gzip(enc);
+  downloadBlob(new Blob([gz], { type:'application/gzip' }), `backup_${Date.now()}.enc.gz`);
+  if (pw.remember && !pw.fromSaved) await saveRememberedPassword(pw.password);
+}
+async function restoreAll(){
+  const f = $('restoreIn').files[0];
+  if (!f) return alert('اختر ملفًا');
+  let json;
+  try {
+    const buf = await f.arrayBuffer();
+    const isGz = f.name.endsWith('.gz');
+    const bytes = isGz ? pako.ungzip(new Uint8Array(buf)) : new Uint8Array(buf);
+    // جرّب فك التشفير أولاً
+    let decrypted = null;
+    try {
+      const pw = await askPassword({ title:'فك تشفير النسخة', hint:'كلمة السر التي استخدمتها عند التصدير.' });
+      decrypted = await decryptBytes(bytes, pw.password);
+      json = textDecoder.decode(decrypted);
+    } catch(e){
+      // قد يكون الملف غير مشفّر (JSON.gz عادي)
+      json = textDecoder.decode(bytes);
+    }
+    const parsed = JSON.parse(json);
+    if (parsed.master){ await dbClear('master'); await dbPutMany('master', parsed.master); }
+    if (parsed.monthly){ await dbClear('monthly'); await dbPutMany('monthly', parsed.monthly); }
+    if (parsed.templates){ await dbPut('settings', { k:'templates', v: parsed.templates }); }
+    renderMaster(); renderHistory(); loadTemplates();
+    alert('تم الاستيراد');
+  } catch(e){ alert('خطأ: '+e.message); }
+}
+
+/* =========================================================
+   Wire up
+   ========================================================= */
+$('pdfIn').onchange = e => { if (e.target.files.length) handleFiles([...e.target.files], true); e.target.value = ''; };
+$('xlsIn').onchange = e => { if (e.target.files.length) handleFiles([...e.target.files], false); e.target.value = ''; };
+$('showPreviewBtn').onclick = () => rawData.length ? renderPreview() : alert('ارفع ملفات أولاً');
+$('saveMasterBtn').onclick = saveMaster;
+$('exportExcelBtn').onclick = () => exportRowsAsXlsx(currentSelectedRows(), 'data');
+$('exportCsvBtn').onclick = () => exportRowsAsCsv(currentSelectedRows(), 'data');
+$('exportJsonGzBtn').onclick = () => exportJsonGz(currentSelectedRows(), `data_${Date.now()}.json.gz`);
+$('discardBtn').onclick = () => { if (confirm('إلغاء البيانات؟')){ rawData=[];detectedColumns=[];columnConfig={};$('previewSection').style.display='none';$('showPreviewBtn').disabled=true; } };
+$('clearMasterBtn').onclick = async () => { if (confirm('مسح Master؟')){ await dbClear('master'); renderMaster(); } };
+$('exportMasterEnc').onclick = exportMasterEncrypted;
+$('exportMasterPlain').onclick = exportMasterPlain;
+$('pullMasterEnc').onclick = pullMasterEncrypted;
+$('importMonthlyBtn').onclick = importMonthly;
+$('applyMatchedBtn').onclick = applyMatched;
+$('addNewBtn').onclick = addNewToMaster;
+$('cancelReviewBtn').onclick = () => { monthlyReview=null; $('reviewSection').style.display='none'; };
+$('exportHistoryEnc').onclick = exportHistoryEncrypted;
+$('exportHistoryGz').onclick = async () => { const all = await dbAll('monthly'); exportJsonGz({rows:all}, `history_${Date.now()}.json.gz`); };
+$('previewReplaceBtn').onclick = previewReplace;
+$('doReplaceBtn').onclick = doReplace;
+$('saveGhBtn').onclick = saveGhConfig;
+$('pullSettingsGh').onclick = pullSettingsGh;
+$('clearRememberedBtn').onclick = async () => { await clearRememberedPassword(); alert('تم مسح كلمة السر المحفوظة'); };
+$('saveTemplateBtn').onclick = saveTemplate;
+$('backupAllBtn').onclick = backupAll;
+$('restoreBtn').onclick = restoreAll;
+$('uidAllNone').onchange = e => {
+  detectedColumns.forEach(c => columnConfig[c].selected = e.target.checked);
+  renderColumnControls(); renderTable();
+};
+
+/* =========================================================
+   Service Worker + Init
+   ========================================================= */
+if ('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(e=>console.warn('SW', e));
+}
+(async () => {
+  await openDB();
+  await renderMaster();
+  await renderHistory();
+  await loadTemplates();
+  await loadGhConfig();
+  log('logList', 'جاهز. ارفع ملفات PDF/Excel.', 'ok');
+})();
+</script>
+</body>
+</html>
